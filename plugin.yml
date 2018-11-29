@@ -1,0 +1,7 @@
+name: LazerBeam
+main: bitterpeacev\lazerbeam\Main
+version: 1.0.0
+api: [3.3.2]
+load: POSTWORLD
+author: BitterPeaceV
+description: lazer beam
