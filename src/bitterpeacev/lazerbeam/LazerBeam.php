@@ -23,11 +23,9 @@ class LazerBeam
         $start = $player->getPosition()->add(0, $player->getEyeHeight());
         $particle->setComponents($start->x, $start->y, $start->z);
 
-        $increase = $player->getDirectionVector();
-        $distance = 0;
-        while ($distance < $range) {
+        $increase = $player->getDirectionVector()->normalize();
+        for ($i = 0; $i < $range; $i++) {
             $pos = $particle->add($increase);
-            $distance += $particle->distance($pos);
 
             // ブロックを通り抜けれない場合、ループから抜ける
             if (!$player->level->getBlock($pos)->canBeFlowedInto()) break;
@@ -35,7 +33,7 @@ class LazerBeam
             // ビームの当たり判定
             foreach ($player->level->getPlayers() as $p) {
                 if ($p->distance($pos) < 2 && $p != $player) {
-                    $ev = new EntityDamageByEntityEvent($player, $p, EntityDamageByEntityEvent::CAUSE_MAGIC, $damage);
+                    $ev = new EntityDamageByEntityEvent($player, $p, EntityDamageByEntityEvent::CAUSE_PROJECTILE, $damage);
                     $p->attack($ev);
 
                     break 2;
