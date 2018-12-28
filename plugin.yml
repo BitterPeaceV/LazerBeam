@@ -1,6 +1,6 @@
 name: LazerBeam
-main: bitterpeacev\lazerbeam\Main
-version: 1.0.0
+main: bitterpeacev\lazerbeam\LazerBeamPlugin
+version: 2.0.0
 api: [3.3.2]
 load: POSTWORLD
 author: BitterPeaceV

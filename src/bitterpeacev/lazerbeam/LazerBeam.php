@@ -3,45 +3,86 @@
 namespace bitterpeacev\lazerbeam;
 
 use pocketmine\Player;
-use pocketmine\level\Level;
 use pocketmine\level\particle\Particle;
+use pocketmine\entity\EffectInstance;
+use pocketmine\event\entity\EntityDamageEvent;
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 
 class LazerBeam
 {
+    /** @var Particle */
+    private $particle;
+    /** @var int */
+    private $range;
+    /** @var float */
+    private $damage;
+    /** @var float */
+    private $knockBack;
+    /** @var EffectInstance[] */
+    private $effects;
+
+    /**
+     * @param Particle         $particle  パーティクル
+     * @param int              $range     長さ
+     * @param float            $damage    攻撃力
+     * @param float            $knockBack ノックバック
+     * @param EffectInstance[] $effects   エフェクト
+     */
+    public function __construct(Particle $particle, int $range, float $damage, float $knockBack = 0.4, array $effects = [])
+    {
+        $this->particle = $particle;
+        $this->range = $range;
+        $this->damage = $damage;
+        $this->knockBack = $knockBack;
+        $this->effects = $effects;
+    }
+
     /**
      * ビームを撃つ
      * 
-     * @param Player   $player   ビームを撃つプレイヤー
-     * @param Particle $particle ビームのパーティクル
-     * @param float    $range    ビームの長さ
-     * @param float    $damage   ビームの攻撃力
+     * @param Player $shooter ビームを撃つプレイヤー
      */
-    public static function beam(Player $player, Particle $particle, float $range, float $damage)
+    public function shot(Player $shooter)
     {
         // ビームの始点を設定
-        $start = $player->getPosition()->add(0, $player->getEyeHeight());
-        $particle->setComponents($start->x, $start->y, $start->z);
+        $start = $shooter->getPosition()->add(0, $shooter->getEyeHeight());
+        $this->particle->setComponents($start->x, $start->y, $start->z);
 
-        $increase = $player->getDirectionVector()->normalize();
-        for ($i = 0; $i < $range; $i++) {
-            $pos = $particle->add($increase);
+        $increase = $shooter->getDirectionVector()->normalize();
+        for ($i = 0; $i < $this->range; $i++) {
+            $pos = $this->particle->add($increase);
 
-            // ブロックを通り抜けれない場合、ループから抜ける
-            if (!$player->level->getBlock($pos)->canBeFlowedInto()) break;
+            // ブロックを通り抜けられない場合、ループを抜ける
+            if (!$shooter->level->getBlock($pos)->canBeFlowedInto()) break;
+
+            // パーティクルを表示
+            $this->particle->setComponents($pos->x, $pos->y, $pos->z);
+            $shooter->level->addParticle($this->particle);
 
             // ビームの当たり判定
-            foreach ($player->level->getPlayers() as $p) {
-                if ($p->distance($pos) < 2 && $p != $player) {
-                    $ev = new EntityDamageByEntityEvent($player, $p, EntityDamageByEntityEvent::CAUSE_PROJECTILE, $damage);
-                    $p->attack($ev);
+            foreach ($shooter->level->getPlayers() as $player) {
+                // 他のプレイヤーに当たった場合
+                if ($player->distance($pos) < 1.5 && $shooter !== $player) {
+                    // ダメージとエフェクトを与える
+                    $event = new EntityDamageByEntityEvent(
+                        $shooter,
+                        $player,
+                        EntityDamageEvent::CAUSE_PROJECTILE,
+                        $this->damage,
+                        [],
+                        $this->knockBack
+                    );
+                    $player->attack($event);
+                    // EffectInstanceを流用すると二回目以降は付与されない(謎)のでcloneしました
+                    foreach ($this->effects as $effect) $player->addEffect(clone $effect);
 
+                    // 当たったのでループを抜ける
                     break 2;
                 }
             }
-
-            $particle->setComponents($pos->x, $pos->y, $pos->z);
-            $player->level->addParticle($particle);
         }
+
+        // パーティクルの座標の初期化
+        $this->particle->setComponents(0, 0, 0);
     }
 }
