@@ -8,6 +8,7 @@ use pocketmine\entity\Effect;
 use pocketmine\entity\EffectInstance;
 use pocketmine\math\Vector3;
 use pocketmine\event\server\DataPacketReceiveEvent;
+use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
 
 class LazerBeamPlugin extends PluginBase implements Listener
@@ -41,6 +42,17 @@ class LazerBeamPlugin extends PluginBase implements Listener
                 if (isset($this->beams[$id])) {
                     $this->beams[$id]->shot($player);
                 }
+            }
+        }
+    }
+
+    public function onBlockTouch(PlayerInteractEvent $event)
+    {
+        if ($event->getAction() === PlayerInteractEvent::RIGHT_CLICK_BLOCK) {
+            $player = $event->getPlayer();
+            $id = $event->getItem()->getId();
+            if (isset($this->beams[$id])) {
+                $this->beams[$id]->shot($player);
             }
         }
     }
