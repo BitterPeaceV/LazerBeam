@@ -35,7 +35,7 @@ class LazerBeamPlugin extends PluginBase implements Listener
     {
         $packet = $event->getPacket();
         if ($packet instanceof LevelSoundEventPacket) {
-            if ($packet->sound == LevelSoundEventPacket::SOUND_ATTACK_NODAMAGE) {
+            if ($packet->sound === LevelSoundEventPacket::SOUND_ATTACK_NODAMAGE) {
                 $player = $event->getPlayer();
                 $id = $player->getInventory()->getItemInHand()->getId();
                 if (isset($this->beams[$id])) {
